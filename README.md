@@ -723,7 +723,7 @@ Compared with standard transparent payout tooling, the long-term goal is to evol
 - privacy-preserving grant and reward distribution flows
 - selective disclosure instead of full public transparency
 
-### Possible future contract-level upgrades
+### Future contract-level upgrades
 
 - batch allocation configuration for larger payout rounds
 - recurring payroll epochs and scheduled payout cycles
