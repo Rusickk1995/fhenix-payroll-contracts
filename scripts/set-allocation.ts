@@ -1,13 +1,14 @@
 import hre from 'hardhat'
 import {
 	encryptUint128,
-	getMockZkVerifier,
 	getOptionalInput,
 	getPayroll,
+	getSigner,
 	loadAllocationsFromCsv,
 	parseAmount,
 	parseArgs,
 	parseRoundId,
+	parseSignerIndex,
 	requireInput,
 } from './helpers'
 
@@ -15,8 +16,7 @@ async function main() {
 	const args = parseArgs()
 	const roundId = parseRoundId(args)
 	const payroll = await getPayroll(hre)
-	const verifier = await getMockZkVerifier(hre)
-	const [signer] = await hre.ethers.getSigners()
+	const signer = await getSigner(hre, parseSignerIndex(args))
 
 	const csvPath = getOptionalInput(args, 'csv', 'ALLOCATIONS_CSV')
 	const recipient = getOptionalInput(args, 'recipient', 'RECIPIENT')
@@ -37,7 +37,7 @@ async function main() {
 			throw new Error(`Invalid recipient address: ${row.recipient}`)
 		}
 
-		const encryptedAmount = await encryptUint128(hre, verifier, row.amount, signer.address)
+		const encryptedAmount = await encryptUint128(hre, signer, row.amount)
 		const tx = await payroll.setAllocation(roundId, row.recipient, encryptedAmount, row.amount)
 		const receipt = await tx.wait()
 

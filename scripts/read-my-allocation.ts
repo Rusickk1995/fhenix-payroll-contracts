@@ -1,5 +1,5 @@
 import hre from 'hardhat'
-import { getMockQueryDecrypter, getPayroll, getSigner, parseArgs, parseRoundId, parseSignerIndex } from './helpers'
+import { decryptUint128, getPayroll, getSigner, parseArgs, parseRoundId, parseSignerIndex } from './helpers'
 
 async function main() {
 	const args = parseArgs()
@@ -7,7 +7,6 @@ async function main() {
 	const signerIndex = parseSignerIndex(args)
 
 	const payroll = await getPayroll(hre)
-	const queryDecrypter = await getMockQueryDecrypter(hre)
 	const signer = await getSigner(hre, signerIndex)
 
 	const [summary, hasAllocation, claimed, canClaim] = await Promise.all([
@@ -22,7 +21,7 @@ async function main() {
 	}
 
 	const allocationHandle = await payroll.connect(signer).getMyAllocation(roundId)
-	const result = await queryDecrypter.mockQueryDecrypt(allocationHandle, 0, signer.address)
+	const amount = await decryptUint128(hre, signer, allocationHandle)
 
 	console.log(`Private allocation read`)
 	console.log(`roundId=${roundId.toString()}`)
@@ -31,8 +30,7 @@ async function main() {
 	console.log(`roundStatus=${summary.status.toString()}`)
 	console.log(`claimed=${claimed}`)
 	console.log(`canClaim=${canClaim}`)
-	console.log(`allowed=${result[0]}`)
-	console.log(`amount=${result[2].toString()}`)
+	console.log(`amount=${amount.toString()}`)
 }
 
 main().catch(error => {

@@ -6,10 +6,6 @@ import './tasks'
 
 dotenv.config()
 
-if (process.env.ENABLE_COFHE_PLUGIN === 'true') {
-	require('cofhe-hardhat-plugin')
-}
-
 const config: HardhatUserConfig = {
 	solidity: {
 		version: '0.8.25',
@@ -18,11 +14,7 @@ const config: HardhatUserConfig = {
 		},
 	},
 	defaultNetwork: 'hardhat',
-	// defaultNetwork: 'localcofhe',
 	networks: {
-		// The plugin already provides localcofhe configuration
-
-		// Sepolia testnet configuration
 		'eth-sepolia': {
 			url: process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia.publicnode.com',
 			accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
@@ -31,8 +23,6 @@ const config: HardhatUserConfig = {
 			timeout: 60000,
 			httpHeaders: {},
 		},
-
-		// Arbitrum Sepolia testnet configuration
 		'arb-sepolia': {
 			url: process.env.ARBITRUM_SEPOLIA_RPC_URL || 'https://sepolia-rollup.arbitrum.io/rpc',
 			accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
@@ -42,8 +32,6 @@ const config: HardhatUserConfig = {
 			httpHeaders: {},
 		},
 	},
-
-	// Optional: Add Etherscan verification config
 	etherscan: {
 		apiKey: {
 			'eth-sepolia': process.env.ETHERSCAN_API_KEY || '',

@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { isAddress } from 'ethers'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
+import { Encryptable, FheTypes, cofhejs } from 'cofhejs/node'
 import { getDeployment, saveDeployment } from '../tasks/utils'
 
 export const TASK_MANAGER_ADDRESS = '0xeA30c4B8b44078Bbf8a6ef5b9f1eC1626C7848D9'
@@ -13,6 +14,18 @@ type AllocationRow = {
 	recipient: string
 	amount: bigint
 }
+
+type CofheResult<T> =
+	| {
+			success: true
+			data: T
+			error: null
+	  }
+	| {
+			success: false
+			data: null
+			error: { message?: string } | null
+	  }
 
 export const parseArgs = (argv: string[] = process.argv.slice(2)): CliArgs => {
 	const args: CliArgs = {}
@@ -105,6 +118,12 @@ export const getMockPayoutToken = async (runtime: HardhatRuntimeEnvironment) => 
 }
 
 export const getSigner = async (runtime: HardhatRuntimeEnvironment, signerIndex: number) => {
+	if (!isMockCofheNetwork(runtime) && signerIndex !== 0) {
+		throw new Error(
+			`Network ${runtime.network.name} uses the active $env:PRIVATE_KEY signer only. Omit --signer-index or use 0, and switch $env:PRIVATE_KEY when changing actors.`,
+		)
+	}
+
 	const signers = await runtime.ethers.getSigners()
 	const signer = signers[signerIndex]
 	if (!signer) {
@@ -134,6 +153,34 @@ export const getMockQueryDecrypter = async (runtime: HardhatRuntimeEnvironment) 
 	return runtime.ethers.getContractAt('MockQueryDecrypter', decrypterAddress)
 }
 
+export const isMockCofheNetwork = (runtime: HardhatRuntimeEnvironment) => {
+	return runtime.network.name === 'hardhat' || runtime.network.name === 'localhost'
+}
+
+export const isTestnetCofheNetwork = (runtime: HardhatRuntimeEnvironment) => {
+	return runtime.network.name === 'arb-sepolia' || runtime.network.name === 'eth-sepolia'
+}
+
+const expectCofheSuccess = <T>(result: CofheResult<T>): T => {
+	if (!result.success) {
+		const message = result.error?.message || 'CoFHE operation failed.'
+		throw new Error(message)
+	}
+
+	return result.data
+}
+
+export const initializeCofheForSigner = async (runtime: HardhatRuntimeEnvironment, signer: any) => {
+	expectCofheSuccess(
+		await cofhejs.initializeWithEthers({
+			ethersProvider: runtime.ethers.provider,
+			ethersSigner: signer,
+			environment: 'TESTNET',
+			generatePermit: true,
+		}),
+	)
+}
+
 export const normalizeEncryptedInput = (encryptedInput: {
 	ctHash: bigint
 	securityZone: number
@@ -148,16 +195,44 @@ export const normalizeEncryptedInput = (encryptedInput: {
 	}
 }
 
-export const encryptUint128 = async (
-	runtime: HardhatRuntimeEnvironment,
-	verifier: any,
-	value: bigint,
-	issuer: string,
-) => {
-	const network = await runtime.ethers.provider.getNetwork()
-	const encryptedInput = await verifier.zkVerify.staticCall(value, EUINT128_TFHE, issuer, 0, network.chainId)
-	await (await verifier.zkVerify(value, EUINT128_TFHE, issuer, 0, network.chainId)).wait()
-	return normalizeEncryptedInput(encryptedInput)
+export const encryptUint128 = async (runtime: HardhatRuntimeEnvironment, signer: any, value: bigint) => {
+	if (isMockCofheNetwork(runtime)) {
+		const verifier = await getMockZkVerifier(runtime)
+		const network = await runtime.ethers.provider.getNetwork()
+		const issuer = await signer.getAddress()
+		const encryptedInput = await verifier.zkVerify.staticCall(value, EUINT128_TFHE, issuer, 0, network.chainId)
+		await (await verifier.zkVerify(value, EUINT128_TFHE, issuer, 0, network.chainId)).wait()
+		return normalizeEncryptedInput(encryptedInput)
+	}
+
+	if (isTestnetCofheNetwork(runtime)) {
+		await initializeCofheForSigner(runtime, signer)
+		const [encryptedInput] = expectCofheSuccess(await cofhejs.encrypt([Encryptable.uint128(value)]))
+		return encryptedInput
+	}
+
+	throw new Error(`Unsupported CoFHE environment for encryption on network ${runtime.network.name}.`)
+}
+
+export const decryptUint128 = async (runtime: HardhatRuntimeEnvironment, signer: any, ciphertext: bigint) => {
+	if (isMockCofheNetwork(runtime)) {
+		const queryDecrypter = await getMockQueryDecrypter(runtime)
+		const address = await signer.getAddress()
+		const result = await queryDecrypter.mockQueryDecrypt(ciphertext, 0, address)
+		if (!result[0]) {
+			throw new Error(result[1] || 'Private allocation decryption failed.')
+		}
+
+		return result[2] as bigint
+	}
+
+	if (isTestnetCofheNetwork(runtime)) {
+		await initializeCofheForSigner(runtime, signer)
+		const address = await signer.getAddress()
+		return expectCofheSuccess(await cofhejs.unseal(ciphertext, FheTypes.Uint128, address))
+	}
+
+	throw new Error(`Unsupported CoFHE environment for decryption on network ${runtime.network.name}.`)
 }
 
 export const loadAllocationsFromCsv = (csvPath: string): AllocationRow[] => {
