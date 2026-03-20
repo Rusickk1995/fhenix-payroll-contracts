@@ -1,11 +1,14 @@
 import { HardhatUserConfig } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomicfoundation/hardhat-ethers'
-import 'cofhe-hardhat-plugin'
 import * as dotenv from 'dotenv'
 import './tasks'
 
 dotenv.config()
+
+if (process.env.ENABLE_COFHE_PLUGIN === 'true') {
+	require('cofhe-hardhat-plugin')
+}
 
 const config: HardhatUserConfig = {
 	solidity: {
