@@ -667,7 +667,7 @@ It should **not** be described as:
 * fully private payouts end to end
 * confidential ERC20 settlement
 
-because the current settlement rail still uses a standard ERC20 payout transfer.
+because the current settlement rail still uses a standard ERC20 payout transfer. (Temporarily)
 
 ---
 
@@ -689,14 +689,49 @@ Current validated status of the MVP:
 
 ## Future Work
 
-Possible next-step directions after the current MVP:
+The current MVP is already complete at the contract and operator-flow level: it supports confidential allocation setup, recipient-only private reads, funding-backed payouts, strict round lifecycle controls, and post-close reclaim. The next steps are focused on productization, stronger privacy guarantees, and deeper differentiation for real-world use.
 
-* frontend integration
-* improved demo UX
-* expanded explorer/documentation links
-* migration to a confidential settlement rail if the required Fhenix-native asset primitive is integrated in a future version
+### Product and UX improvements
 
-These are intentionally out of scope for the current contract-first MVP.
+- production-ready frontend for admin and recipient flows
+- guided recipient experience for private allocation reveal and claim
+- clearer round status, funding state, and claim progress views
+- cleaner wallet switching and network handling on Arbitrum Sepolia
+- submission-grade demo UX for judges, builders, and non-technical reviewers
+
+### Privacy and protocol improvements
+
+- migration from standard ERC20 settlement to a confidential settlement rail when the required Fhenix-native primitive is available
+- reduction of remaining public payout leakage at claim time
+- stronger selective-disclosure patterns for recipients, operators, and auditors
+- more advanced encrypted accounting patterns for treasury and payout workflows
+
+### Buildathon-aligned extensions
+
+- confidential team payroll for DAOs and crypto-native contributor teams
+- private contractor and grant payout rounds
+- selective-disclosure audit flows for finance and compliance use cases
+- privacy-first treasury distribution primitives beyond simple one-off payouts
+
+### Differentiation and uniqueness
+
+Compared with standard transparent payout tooling, the long-term goal is to evolve ConfidentialPayroll into a privacy-native compensation layer with capabilities that most existing onchain payroll systems do not provide:
+
+- encrypted allocation setup by default
+- recipient-only payout visibility before claim
+- confidential payout coordination for teams and DAOs
+- privacy-preserving grant and reward distribution flows
+- selective disclosure instead of full public transparency
+
+### Possible future contract-level upgrades
+
+- batch allocation configuration for larger payout rounds
+- recurring payroll epochs and scheduled payout cycles
+- role separation between treasury operator and payout manager
+- safer admin controls for production deployments
+- optional support for more advanced confidential payment primitives as the ecosystem matures
+
+These directions are intentionally outside the scope of the current contract-first MVP, which is focused on validating the core privacy-by-design payout round architecture end to end.
 
 ---
 
@@ -704,6 +739,5 @@ These are intentionally out of scope for the current contract-first MVP.
 
 MIT
 
-````
 
 ---
