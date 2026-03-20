@@ -1,19 +1,11 @@
-node_modules
+node_modules/
+artifacts/
+cache/
+typechain-types/
+coverage/
 .env
-
-# Hardhat files
-/cache
-/artifacts
-
-# TypeChain files
-/typechain
-/typechain-types
-
-# solidity-coverage files
-/coverage
-/coverage.json
-
-# Hardhat Ignition default folder for deployments against a local node
-ignition/deployments/chain-31337
-deployments/arb-sepolia.json
-deployments/eth-sepolia.json
+.env.*
+!.env.example
+.localhost-node.err
+.localhost-node.log
+deployments/
