@@ -1,27 +1,25 @@
 ---
 
-# Готовый README.md
-
-Скопируй **целиком**:
-
 ````md
 # ConfidentialPayroll
 
-Privacy-by-design payroll and payout rounds MVP built on Fhenix CoFHE.
+Privacy-by-design payroll and payout rounds MVP built with Fhenix CoFHE.
 
-This repository contains a contract-first implementation of confidential payout rounds for teams, DAOs, grants, and contributor compensation flows. The project is designed as a strong hackathon-grade MVP: it provides encrypted per-recipient allocation storage, recipient-only private allocation reads, funding-backed payouts, strict round lifecycle management, and settlement of unclaimed funds.
+This repository contains a contract-first implementation of confidential payout rounds for teams, DAOs, grants, and contributor compensation flows. The project is built as a strong hackathon-grade MVP: it supports encrypted per-recipient allocation storage, recipient-only private allocation reads, funding-backed payouts, strict round lifecycle management, and settlement of unclaimed funds.
+
+**Repository:** https://github.com/Rusickk1995/fhenix-payroll-contracts
 
 ---
 
 ## Overview
 
-Traditional onchain payroll and payout systems are transparent by default. That makes them easy to audit, but often unusable for teams that do not want every salary, grant, or contributor reward publicly visible at configuration time.
+Traditional onchain payroll and payout systems are transparent by default. That makes them easy to audit, but often unsuitable for teams that do not want every salary, grant, or contributor reward publicly visible at configuration time.
 
 ConfidentialPayroll takes a privacy-by-design approach:
 
 - allocation data is configured through encrypted CoFHE-compatible inputs
 - only the intended recipient can privately read their allocation
-- payouts are backed by real round escrow
+- payouts are backed by real escrow
 - rounds move through a strict lifecycle
 - unclaimed funds can be reclaimed only after close
 
@@ -41,7 +39,7 @@ This MVP implements:
 - strict round lifecycle: `Draft -> Open -> Closed`
 - deadline-aware claim activity
 - post-close reclaim of unclaimed funds
-- operator scripts for local/manual execution
+- operator scripts for local and testnet execution
 - automated test coverage for happy paths and protected failure paths
 
 This MVP does **not** implement:
@@ -64,9 +62,9 @@ This project is privacy-by-design, but the privacy boundary is important.
 
 ### What is confidential
 
-- recipient allocation data is stored through the FHE path
+- recipient allocation data is configured through the FHE path
 - only the intended recipient can privately read their own allocation
-- allocation values are not openly emitted in custom claim events
+- allocation values are not openly repeated in custom claim events
 - selective disclosure is enforced through the recipient read path
 
 ### What is public
@@ -111,7 +109,7 @@ Main contract implementing:
 
 #### `contracts/MockPayoutToken.sol`
 
-Mock ERC20 payout token used for local development and manual operator flow.
+Mock ERC20 payout token used for local development and testnet/manual operator flow.
 
 #### `contracts/CoFheMockImports.sol`
 
@@ -124,6 +122,7 @@ Mock-support import surface used for local CoFHE-compatible testing.
 Each round moves through these states:
 
 ### Draft
+
 Round exists, but is not yet active.
 
 In this state:
@@ -132,6 +131,7 @@ In this state:
 - round cannot be claimed yet
 
 ### Open
+
 Round is active for recipients.
 
 A round can open only when:
@@ -145,6 +145,7 @@ In this state:
 - claim activity is bounded by deadline checks
 
 ### Closed
+
 Round is finalized.
 
 In this state:
@@ -174,55 +175,32 @@ The intended accounting semantics are:
 
 ---
 
-## Operator Flow
-
-The intended manual flow is:
-
-1. deploy contracts
-2. create round
-3. fund round
-4. configure allocations
-5. open round
-6. recipient privately reads allocation
-7. recipient claims
-8. admin closes round
-9. admin reclaims leftover funds
-10. operator verifies final round summary
-
-This flow is validated both manually and in automated tests.
-
----
-
 ## Repository Structure
 
 ```text
 contracts/
-  contracts/
-    CoFheMockImports.sol
-    ConfidentialPayroll.sol
-    MockPayoutToken.sol
+  CoFheMockImports.sol
+  ConfidentialPayroll.sol
+  MockPayoutToken.sol
 
-  scripts/
-    claim-round.ts
-    close-round.ts
-    create-round.ts
-    fund-round.ts
-    helpers.ts
-    open-round.ts
-    read-my-allocation.ts
-    reclaim-round.ts
-    round-summary.ts
-    set-allocation.ts
+scripts/
+  claim-round.ts
+  close-round.ts
+  create-round.ts
+  fund-round.ts
+  helpers.ts
+  open-round.ts
+  read-my-allocation.ts
+  reclaim-round.ts
+  round-summary.ts
+  set-allocation.ts
 
-  tasks/
-    deploy-payroll.ts
-    index.ts
+tasks/
+  deploy-payroll.ts
+  index.ts
 
-  test/
-    ConfidentialPayroll.test.ts
-
-  deployments/
-    ...local deployment outputs, ignored in git
+test/
+  ConfidentialPayroll.test.ts
 ````
 
 ---
@@ -235,7 +213,6 @@ Recommended environment:
 * npm
 * Hardhat
 * Windows PowerShell or compatible shell
-* local dev environment already configured for this repository
 
 ---
 
@@ -290,33 +267,27 @@ The suite covers:
 
 ---
 
-## Local Development Workflow
+## Localhost Validation
 
-### Terminal 1 — start local Hardhat node
+The project has been validated locally end to end on localhost.
+
+### Local workflow
+
+#### Terminal 1
 
 ```powershell
 npx hardhat node
 ```
 
-Keep this terminal open.
+#### Terminal 2
 
-### Terminal 2 — deploy contracts
+Deploy:
 
 ```powershell
 npx hardhat deploy-payroll --network localhost
 ```
 
-Expected deployment includes:
-
-* local CoFHE mock setup
-* `MockPayoutToken`
-* `ConfidentialPayroll`
-
----
-
-## Manual End-to-End Flow
-
-### 1. Create round
+Create round:
 
 ```powershell
 $env:ROUND_NAME='Hackathon Round 1'
@@ -324,7 +295,7 @@ $env:ROUND_DEADLINE='1800000000'
 npx hardhat run .\scripts\create-round.ts --network localhost
 ```
 
-### 2. Fund round
+Fund round:
 
 ```powershell
 $env:ROUND_ID='0'
@@ -332,9 +303,7 @@ $env:AMOUNT='400'
 npx hardhat run .\scripts\fund-round.ts --network localhost
 ```
 
-### 3. Configure recipient allocations
-
-Recipient 1:
+Set allocations:
 
 ```powershell
 $env:ROUND_ID='0'
@@ -343,8 +312,6 @@ $env:AMOUNT='250'
 npx hardhat run .\scripts\set-allocation.ts --network localhost
 ```
 
-Recipient 2:
-
 ```powershell
 $env:ROUND_ID='0'
 $env:RECIPIENT='0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
@@ -352,58 +319,45 @@ $env:AMOUNT='150'
 npx hardhat run .\scripts\set-allocation.ts --network localhost
 ```
 
-### 4. Open round
+Open round:
 
 ```powershell
 $env:ROUND_ID='0'
 npx hardhat run .\scripts\open-round.ts --network localhost
 ```
 
-### 5. Recipient privately reads allocation
-
-Signer index `1` corresponds to `0x7099...79C8` in local Hardhat accounts.
+Recipient private read:
 
 ```powershell
-$env:ROUND_ID='0'
 $env:SIGNER_INDEX='1'
+$env:ROUND_ID='0'
 npx hardhat run .\scripts\read-my-allocation.ts --network localhost
 ```
 
-Expected result:
-
-* `allowed=true`
-* correct allocation revealed only for that recipient
-
-### 6. Recipient claims
+Recipient claim:
 
 ```powershell
-$env:ROUND_ID='0'
 $env:SIGNER_INDEX='1'
+$env:ROUND_ID='0'
 npx hardhat run .\scripts\claim-round.ts --network localhost
 ```
 
-Expected result:
-
-* claim succeeds
-* payout is executed
-* script confirms balance changed
-
-### 7. Close round
+Close round:
 
 ```powershell
-Remove-Item Env:\SIGNER_INDEX
+Remove-Item Env:\SIGNER_INDEX -ErrorAction SilentlyContinue
 $env:ROUND_ID='0'
 npx hardhat run .\scripts\close-round.ts --network localhost
 ```
 
-### 8. Reclaim unclaimed funds
+Reclaim unclaimed funds:
 
 ```powershell
 $env:ROUND_ID='0'
 npx hardhat run .\scripts\reclaim-round.ts --network localhost
 ```
 
-### 9. Final summary
+Final summary:
 
 ```powershell
 $env:ROUND_ID='0'
@@ -411,7 +365,7 @@ $env:RECIPIENT='0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
 npx hardhat run .\scripts\round-summary.ts --network localhost
 ```
 
-Expected final sample state:
+### Local expected final state
 
 * `status=2`
 * `recipientCount=2`
@@ -421,6 +375,166 @@ Expected final sample state:
 * `totalClaimed=250`
 * `totalReclaimed=150`
 * `reclaimableAmount=0`
+
+---
+
+## Arbitrum Sepolia Validation
+
+The project has also been manually validated on **Arbitrum Sepolia**.
+
+### Network
+
+* **Network:** Arbitrum Sepolia
+* **Chain ID:** `421614`
+
+### Deployed Contracts
+
+* **ConfidentialPayroll:** `0x7f931Ad76C0a802D8bfEeC5A472855c56a7ACf49`
+* **MockPayoutToken:** `0x1511F877f6d6551d1B2DcF619666a2111aA0542e`
+
+### Demo Test Actors
+
+These public testnet wallets were used for the manual operator flow:
+
+* **Admin:** `0x7657aD6B0d710428b803E2F355a86a10f9675433`
+* **Recipient 1:** `0x9051e6Dc8df8814f530171081A5052d58EA417a2`
+* **Recipient 2:** `0xbF20747abb97AAa7E6E147549C6Da386bB9De6E0`
+
+### Arbitrum Sepolia Manual Flow
+
+Set RPC and active signer:
+
+```powershell
+$env:ARBITRUM_SEPOLIA_RPC_URL='https://sepolia-rollup.arbitrum.io/rpc'
+$env:PRIVATE_KEY='0xYOUR_ACTIVE_PRIVATE_KEY'
+```
+
+Deploy:
+
+```powershell
+npx hardhat deploy-payroll --network arb-sepolia
+```
+
+Create round:
+
+```powershell
+$env:ROUND_NAME='Hackathon Round 1'
+$env:ROUND_DEADLINE='1800000000'
+npx hardhat run .\scripts\create-round.ts --network arb-sepolia
+```
+
+Fund round:
+
+```powershell
+$env:ROUND_ID='0'
+$env:AMOUNT='400'
+npx hardhat run .\scripts\fund-round.ts --network arb-sepolia
+```
+
+Set allocation for recipient 1:
+
+```powershell
+$env:ROUND_ID='0'
+$env:RECIPIENT='0x9051e6Dc8df8814f530171081A5052d58EA417a2'
+$env:AMOUNT='250'
+npx hardhat run .\scripts\set-allocation.ts --network arb-sepolia
+```
+
+Set allocation for recipient 2:
+
+```powershell
+$env:ROUND_ID='0'
+$env:RECIPIENT='0xbF20747abb97AAa7E6E147549C6Da386bB9De6E0'
+$env:AMOUNT='150'
+npx hardhat run .\scripts\set-allocation.ts --network arb-sepolia
+```
+
+Open round:
+
+```powershell
+$env:ROUND_ID='0'
+npx hardhat run .\scripts\open-round.ts --network arb-sepolia
+```
+
+Switch to recipient 1 private key, then private read:
+
+```powershell
+$env:ROUND_ID='0'
+npx hardhat run .\scripts\read-my-allocation.ts --network arb-sepolia
+```
+
+Recipient 1 claim:
+
+```powershell
+$env:ROUND_ID='0'
+npx hardhat run .\scripts\claim-round.ts --network arb-sepolia
+```
+
+Switch back to admin private key, then close round:
+
+```powershell
+$env:ROUND_ID='0'
+npx hardhat run .\scripts\close-round.ts --network arb-sepolia
+```
+
+Reclaim unclaimed funds:
+
+```powershell
+$env:ROUND_ID='0'
+npx hardhat run .\scripts\reclaim-round.ts --network arb-sepolia
+```
+
+Final summary:
+
+```powershell
+$env:ROUND_ID='0'
+$env:RECIPIENT='0xbF20747abb97AAa7E6E147549C6Da386bB9De6E0'
+npx hardhat run .\scripts\round-summary.ts --network arb-sepolia
+```
+
+### Arbitrum Sepolia Validation Result
+
+Validated successfully on testnet with the same end-to-end operator flow:
+
+* deploy
+* create round
+* fund round
+* set allocation 1
+* set allocation 2
+* open round
+* recipient private read
+* recipient claim
+* close round
+* reclaim
+* final summary
+
+### Final Testnet State
+
+* `status=2`
+* `recipientCount=2`
+* `claimedCount=1`
+* `fundedAmount=400`
+* `totalAllocated=400`
+* `totalClaimed=250`
+* `totalReclaimed=150`
+* `reclaimableAmount=0`
+
+---
+
+## Verified Arbitrum Sepolia Transactions
+
+* **Deploy MockPayoutToken:** `0x06591865c49ccdf1d0111422f3ac55412aa4e40eac5c255990b3f4f849236c21`
+* **Mint MockPayoutToken supply:** `0x05101a206ad8b18b2c0c3c35bf2040e273ae001317293d30eda4e0e8800fccf2`
+* **Deploy ConfidentialPayroll:** `0x256b7a9cd770f1a31fc1be59f21b9bffb01544ace4a603f4c59e59372014136f`
+* **Create round:** `0x761b3ca576f89443f8dfa2ef77054214d0c04fee20e342d416ca990ced8dfa0a`
+* **Approve payout token:** `0x7c74e00ffbbaa2e3aa3fe6bafbbb44dde6995ef944aa156e144242cafaefecd1`
+* **Fund round:** `0xce58f47bb1f41b6a93ad65e9864cce00b39840f28ca077929940b21f864b3d0b`
+* **Set allocation 1:** `0x1bd4ac2ae57705145c0c1bdd144fa8b14edb28b0cb74355fc831f4ec6c4c2330`
+* **Set allocation 2:** `0x52a612883d8c9c4ba67b7e7d98144e18e63e4c9e5212d0efc249fc181d4dd9f4`
+* **Open round:** `0xf4c273c91fe3954d2261014c8bcc8f682c4d8ff3954bb4906e79b61d8ba41fd0`
+* **Claim:** `0xe666a41a910443f364849d9531eff8ce4f181d6e8e5094287b1d2b4201ef51e3`
+* **Close round:** `0x41eca1f24f7dd19887e3c3aff1ddfd3d02a679d1e78751e3b62433c219cf5d90`
+* **Reclaim unclaimed funds:** `0xc06512ec62d5c35bfb6a1c8459c669d45503bf046b5e8546bb0dd7230bafe26c`
 
 ---
 
@@ -469,7 +583,7 @@ Performs the recipient-only private read path.
 Inputs:
 
 * `ROUND_ID`
-* `SIGNER_INDEX`
+* localhost only: optional `SIGNER_INDEX`
 
 ### `scripts/claim-round.ts`
 
@@ -478,7 +592,7 @@ Claims a recipient payout once.
 Inputs:
 
 * `ROUND_ID`
-* `SIGNER_INDEX`
+* localhost only: optional `SIGNER_INDEX`
 
 ### `scripts/close-round.ts`
 
@@ -527,39 +641,24 @@ These are tested and expected behaviors.
 
 ---
 
-## Current Status
+## Known Limitations
 
-Current local status of the MVP:
-
-* compile passes
-* focused test suite passes
-* manual localhost flow passes end to end
-* exact-escrow opening semantics enforced
-* recipient-only private allocation read path works
-* one-time claim works
-* reclaim after close works
-* final state verification works
+* settlement is still executed via a standard ERC20 payout rail
+* claim-time payout amount is therefore public through ERC20 transfer semantics
+* this MVP does not yet include a confidential token or encrypted balance settlement primitive
+* frontend is intentionally out of scope in this repository
 
 ---
 
-## Testnet Migration
+## Buildathon Fit
 
-The next engineering step after local validation is migration from localhost to a supported testnet flow such as:
+This MVP is aligned with the core privacy-by-design buildathon thesis:
 
-* Arbitrum Sepolia
-* Ethereum Sepolia
-* Base Sepolia
-
-That migration should preserve:
-
-* current contract semantics
-* current operator flow
-* current privacy model
-* current accounting guarantees
-
----
-
-## Honest Technical Positioning
+* encrypted state for recipient allocation data
+* selective disclosure through recipient-only reads
+* strict onchain logic around funding, lifecycle, claims, and reclaim
+* privacy-first architecture for payroll and payout rounds
+* validated locally and on Arbitrum Sepolia testnet
 
 This repository should be described as:
 
@@ -575,13 +674,29 @@ because the current settlement rail still uses a standard ERC20 payout transfer.
 
 ---
 
+## Current Status
+
+Current validated status of the MVP:
+
+* compile passes
+* focused test suite passes
+* localhost end-to-end flow passes
+* Arbitrum Sepolia end-to-end flow passes
+* exact-escrow opening semantics enforced
+* recipient-only private allocation read path works
+* one-time claim works
+* reclaim after close works
+* final state verification works
+
+---
+
 ## Future Work
 
 Possible next-step directions after the current MVP:
 
-* testnet deployment flow for Arbitrum Sepolia
 * frontend integration
 * improved demo UX
+* expanded explorer/documentation links
 * migration to a confidential settlement rail if the required Fhenix-native asset primitive is integrated in a future version
 
 These are intentionally out of scope for the current contract-first MVP.
@@ -593,27 +708,5 @@ These are intentionally out of scope for the current contract-first MVP.
 MIT
 
 ````
-
----
-
-# 4. Сохранить файл
-
-В VS Code просто `Ctrl + S`
-
-Если хочешь без VS Code, можно через PowerShell, но для большого README удобнее руками в редакторе.
-
----
-
-# 5. Проверить файл
-
-```powershell
-Get-Content README.md
-````
-
-или открыть:
-
-```powershell
-code README.md
-```
 
 ---
