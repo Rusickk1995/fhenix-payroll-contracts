@@ -1,6 +1,3 @@
----
-
-````md
 # ConfidentialPayroll
 
 Privacy-by-design payroll and payout rounds MVP built with Fhenix CoFHE.
