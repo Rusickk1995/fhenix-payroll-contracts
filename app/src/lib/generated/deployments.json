@@ -2,8 +2,7 @@
   "localhost": {
     "ConfidentialPayroll": "0x36C02dA8a0983159322a80FFE9F24b1acfF8B570",
     "MockPayoutToken": "0x9d4454B023096f34B160D6B654540c56A1F81688",
-    "MockQueryDecrypter": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF",
-    "MockZkVerifier": "0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf"
+    "MockQueryDecrypter": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF"
   },
   "arb-sepolia": {
     "ConfidentialPayroll": "0x7f931Ad76C0a802D8bfEeC5A472855c56a7ACf49",
